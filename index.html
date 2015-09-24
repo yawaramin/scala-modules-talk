@@ -46,6 +46,27 @@
     <script src="lib/js/html5shiv.js"></script>
     <![endif]-->
 
+    <style type="text/css">
+      div.left-column {
+        float: left;
+        width: 50%;
+        padding-right: 0;
+        margin-right: 0;
+      }
+
+      div.right-column {
+        float: right;
+        width: 50%;
+        padding-right: 0;
+        padding-left: 0;
+        margin-left: 0;
+      }
+
+      .reveal .slides {
+        width: 100% !important;
+      }
+    </style>
+
     <title>Scala Modules: a Comparison of Abstractions</title>
   </head>
 
@@ -54,25 +75,179 @@
       <div class="slides">
         <section>
           <h1>Scala Modules</h1>
+
           <h3>A Comparison of Abstractions</h3>
 
           <p>Yawar Amin (yawar.amin@mediative.com, @yawaramin)</p>
+
           <p>2015-09-25</p>
         </section>
 
         <section>
           <h2>The Goal</h2>
 
-          <p>We want to model the idea of something being clickable,
+          <p>We want to model the ideas of something being clickable,
           and also draggable.</p>
 
-          <p>If something is draggable, it should also be clickable.</p>
+          <p>If something is draggable, it should also (automatically)
+          be clickable.</p>
 
           <p>Our test dummy will be an object of type
           <code>GuiIcon</code>.</p>
         </section>
 
-        <!-- Example of nested vertical slides -->
+        <section>
+          <h2>Common Code</h2>
+
+          <p>Let's define some common code first so that we can use it
+          throughout the codebase.</p>
+
+          <pre>
+            <code data-trim>
+object Common {
+  // 2-D coordinate pair
+  type Coords = (Int, Int)
+
+  // Pipe-forward (reverse function application like in MLs)
+  implicit class Piper[A](val x: A) extends AnyVal {
+    def |>[B](f: A => B) = f(x)
+  }
+}
+
+import Common._
+            </code>
+          </pre>
+        </section>
+
+        <section>
+          <section>
+            <h2>Inheritance and Typeclasses</h2>
+
+            <div class="left-column" style="font-size: 85%;">
+              <pre>
+                <code data-trim>
+object Inheretic {
+  trait Clickable { def click(coords: Coords) }
+
+  trait Draggable extends Clickable {
+    def drag(startCoords: Coords, endCoords: Coords) =
+      click(startCoords)
+  }
+                </code>
+              </pre>
+            </div>
+
+            <div class="right-column" style="font-size: 85%;">
+              <pre>
+                <code data-trim>
+object Typeclassy {
+  trait Clickable[A] { def click(coords: Coords)(a: A) }
+
+  trait Draggable[A] extends Clickable[A] {
+    def drag(startCoords: Coords, endCoords: Coords)(a: A) =
+      a |> click(startCoords)
+  }
+                </code>
+              </pre>
+            </div>
+
+            <br clear="all" />
+          </section>
+
+          <section>
+            <h2>Inheritance and Typeclasses</h2>
+
+            <div class="left-column">
+              <pre>
+                <code data-trim>
+object Inheretic {
+  trait Clickable { def click(coords: Coords) }
+
+  trait Draggable extends Clickable {
+    def drag(startCoords: Coords, endCoords: Coords) =
+      click(startCoords)
+  }
+
+  case class GuiIcon(text: String) extends Draggable {
+    override def click(coords: Coords) =
+      println(s"$text Clicked at (${coords._1}, ${coords._2})")
+
+    override def drag(startCoords: Coords, endCoords: Coords) = {
+      super.drag(startCoords, endCoords)
+      println(s"$text Dragged to (${endCoords._1}, ${endCoords._2})")
+    }
+  }
+
+  def dragThenClick(guiIcon: GuiIcon) = {
+    guiIcon.drag(0 -> 0, 1 -> 1)
+    guiIcon.click(1 -> 1)
+  }
+
+  def run = {
+    val guiIcon = GuiIcon("Recycle Bin")
+    dragThenClick(guiIcon)
+  }
+}
+                </code>
+              </pre>
+            </div>
+
+            <div class="right-column">
+              <pre>
+                <code data-trim>
+object Typeclassy {
+  trait Clickable[A] { def click(coords: Coords)(a: A) }
+
+  trait Draggable[A] extends Clickable[A] {
+    def drag(startCoords: Coords, endCoords: Coords)(a: A) =
+      a |> click(startCoords)
+  }
+
+  case class GuiIcon(text: String)
+
+  object GuiIcon {
+    implicit val clickable: Clickable[GuiIcon] =
+      new Clickable[GuiIcon] {
+        override def click(coords: Coords)(guiIcon: GuiIcon) =
+          println(
+            s"${guiIcon.text} Clicked at (${coords._1}, ${coords._2})")
+      }
+
+    implicit val draggable: Draggable[GuiIcon] =
+      new Draggable[GuiIcon] {
+        override def click(coords: Coords)(guiIcon: GuiIcon) =
+          guiIcon |> clickable.click(coords)
+
+        override def drag(
+          startCoords: Coords, endCoords: Coords)(guiIcon: GuiIcon) = {
+          guiIcon |> super.drag(startCoords, endCoords)
+
+          println(
+            s"${guiIcon.text} Dragged to (${endCoords._1}, ${endCoords._2})")
+        }
+      }
+  }
+
+  def dragThenClick(
+    guiIcon: GuiIcon)(implicit DG: Draggable[GuiIcon]) = {
+    guiIcon |> DG.drag(0 -> 0, 1 -> 1)
+    guiIcon |> DG.click(1 -> 1)
+  }
+
+  def run = {
+    val guiIcon = GuiIcon("Recycle Bin")
+    dragThenClick(guiIcon)
+  }
+}
+                </code>
+              </pre>
+            </div>
+
+            <br clear="all" />
+
+          </section>
+        </section>
+
         <section>
           <section>
             <h2>Vertical Slides</h2>
@@ -400,14 +575,13 @@ Reveal.addEventListener( 'customevent', function() {
     <script src="js/reveal.js"></script>
 
     <script>
-
       // Full list of configuration options available at:
       // https://github.com/hakimel/reveal.js#configuration
       Reveal.initialize({
         controls: true,
         progress: true,
         history: true,
-        center: true,
+        center: false,
 
         transition: 'none', // none/fade/slide/convex/concave/zoom
 
