@@ -61,6 +61,10 @@
         padding-left: 0;
         margin-left: 0;
       }
+
+      div.p75 { font-size: 75%; }
+      div.p80 { font-size: 80%; }
+      div.p85 { font-size: 85%; }
     </style>
 
     <title>Scala Modules: a Comparison of Abstractions</title>
@@ -127,58 +131,41 @@ import Common._
 
         <section>
           <section>
-            <h2>Inheritance and Typeclasses</h2>
+            <h2>Inheritance Approach</h2>
 
-            <div class="left-column" style="font-size: 75%;">
+            <h3>Base Traits</h3>
+
+            <div class="left-column p85">
               <pre>
                 <code data-trim>
-object Inheritance {
-  trait Clickable { def click(coords: Coords) }
+trait Clickable { def click(coords: Coords) }
 
-  trait Draggable extends Clickable {
-    def drag(startCoords: Coords, endCoords: Coords) =
-      click(startCoords)
-  }
+trait Draggable extends Clickable {
+  def drag(startCoords: Coords, endCoords: Coords) =
+    click(startCoords)
+}
                 </code>
               </pre>
             </div>
 
-            <div class="right-column" style="font-size: 75%;">
+            <div class="right-column">
               <p>Our datatype ('something') will be a descendant of both
               these traits.</p>
-            </div>
 
-            <br clear="all" />
-
-            <div class="left-column" style="font-size: 75%;">
-              <pre>
-                <code data-trim>
-object Typeclasses {
-  trait Clickable[A] { def click(coords: Coords)(a: A) }
-
-  trait Draggable[A] extends Clickable[A] {
-    def drag(startCoords: Coords, endCoords: Coords)(a: A) =
-      a |> click(startCoords)
-  }
-                </code>
-              </pre>
-            </div>
-
-            <div class="right-column" style="font-size: 75%;">
-              <p>Same as above, but the 'something' is a separate
-              type.</p>
-
-              <p>We don't necessarily see the internal state of that
-              something.</p>
+              <p>Notice the default implementation of drag
+              behaviour--just a click (we can't do anything more right
+              now).</p>
             </div>
 
             <br clear="all" />
           </section>
 
           <section>
-            <h2>Inheritance and Typeclasses</h2>
+            <h2>Inheritance Approach</h2>
 
-            <div class="left-column" style="font-size: 75%;">
+            <h3>Implementation</h3>
+
+            <div class="left-column p75">
               <pre>
                 <code data-trim>
 case class GuiIcon(text: String) extends Draggable {
@@ -194,21 +181,86 @@ case class GuiIcon(text: String) extends Draggable {
               </pre>
             </div>
 
-            <div class="right-column" style="font-size: 75%;">
-              <p>The 'something' is our datatype and it directly
-              implements both the clickand drag behaviours.</p>
+            <div class="right-column">
+              <p>The implementation is <em>direct.</em>
 
-              <p>It also directly <em>customises</em> the drag
-              behaviour.
+              <p>It also <em>customises</em> the default drag
+              behaviour.</p>
             </div>
 
             <br clear="all" />
+          </section>
 
-            <div class="left-column" style="font-size: 75%;">
+          <section>
+            <h2>Inheritance Approach</h2>
+
+            <h3>Usage</h3>
+
+            <div class="left-column">
               <pre>
                 <code data-trim>
-case class GuiIcon(text: String)
+def dragThenClick(guiIcon: GuiIcon) = {
+  guiIcon.drag(0 -> 0, 1 -> 1)
+  guiIcon.click(1 -> 1)
+}
 
+def run = {
+  val guiIcon = GuiIcon("Recycle Bin")
+  dragThenClick(guiIcon)
+}
+                </code>
+              </pre>
+            </div>
+
+            <div class="right-column">
+              <p>Behaviours in the datatype: pick from the 'bag of
+              behaviours' and use directly.</p>
+            </div>
+
+            <br clear="all" />
+          </section>
+        </section>
+
+        <section>
+          <section>
+            <h2>Typeclass Approach</h2>
+
+            <h3>Typeclasses and Types</h3>
+
+            <div class="left-column p80">
+              <pre>
+                <code data-trim>
+trait Clickable[A] { def click(coords: Coords)(a: A) }
+
+trait Draggable[A] extends Clickable[A] {
+  def drag(startCoords: Coords, endCoords: Coords)(a: A) =
+    a |> click(startCoords)
+}
+
+case class GuiIcon(text: String)
+                </code>
+              </pre>
+            </div>
+
+            <div class="right-column">
+              <p><code>GuiIcon</code> will be an instance of both these
+              typeclasses (de facto).</p>
+
+              <p>We also have a default drag behaviour in the typeclass
+              definition.</p>
+            </div>
+
+            <br clear="all" />
+          </section>
+
+          <section>
+            <h2>Typeclass Approach</h2>
+
+            <h3>Implementation</h3>
+
+            <div class="left-column p75">
+              <pre>
+                <code data-trim>
 object GuiIcon {
   implicit val clickable: Clickable[GuiIcon] =
     new Clickable[GuiIcon] {
@@ -235,41 +287,24 @@ object GuiIcon {
               </pre>
             </div>
 
-            <div class="right-column" style="font-size: 75%;">
-              <p>The datatype is pure data, no behaviour.</p>
+            <div class="right-column p85">
+              <p>The implementation is <em>indirect.</em>
 
-              <p>All behaviour defined separately.</p>
+              <p>It doesn't have knowledge of <code>GuiIcon</code>
+              internals.</p>
+
+              <p>It also customises the default drag behaviour.</p>
             </div>
 
             <br clear="all" />
           </section>
 
           <section>
-            <h2>Inheritance and Typeclasses</h2>
+            <h2>Typeclass Approach</h2>
 
-            <div class="left-column" style="font-size: 75%;">
-              <pre>
-                <code data-trim>
-def dragThenClick(guiIcon: GuiIcon) = {
-  guiIcon.drag(0 -> 0, 1 -> 1)
-  guiIcon.click(1 -> 1)
-}
+            <h3>Usage</h3>
 
-def run = {
-  val guiIcon = GuiIcon("Recycle Bin")
-  dragThenClick(guiIcon)
-}
-                </code>
-              </pre>
-            </div>
-
-            <div class="right-column" style="font-size: 75%;">
-              <p>Behaviours in the datatype: use directly.</p>
-            </div>
-
-            <br clear="all" />
-
-            <div class="left-column" style="font-size: 75%;">
+            <div class="left-column p85">
               <pre>
                 <code data-trim>
 def dragThenClick(
@@ -286,12 +321,10 @@ def run = {
               </pre>
             </div>
 
-            <div class="right-column" style="font-size: 75%;">
-              <p>Behaviours external in typeclass instances: use
-              'from outside'.</p>
+            <div class="right-column">
+              <p>Explicit use of behaviours (click, drag).</p>
 
-              <p>Implicit syntax sugar makes drag-then-click behaviour
-              look nice.</p>
+              <p>Implicit call syntax for nice-looking client code.</p>
             </div>
 
             <br clear="all" />
@@ -300,87 +333,45 @@ def run = {
 
         <section>
           <section>
-            <h2>Typeclasses and Modules</h2>
+            <h2>Modular Approach</h2>
 
-            <div class="left-column" style="font-size: 75%;">
+            <h3>Module Signatures and Types</h3>
+
+            <div class="left-column p85">
               <pre>
                 <code data-trim>
-object Typeclasses {
-  trait Clickable[A] { def click(coords: Coords)(a: A) }
+trait Clickable[A] {
+  type T = A
+  def click(coords: Coords)(t: T)
+}
 
-  trait Draggable[A] extends Clickable[A] {
-    def drag(startCoords: Coords, endCoords: Coords)(a: A) =
-      a |> click(startCoords)
-  }
+trait Draggable[A] {
+  type T = A
+  def drag(startCoords: Coords, endCoords: Coords)(t: T)
+}
+
+case class GuiIcon(text: String)
                 </code>
               </pre>
+            </div>
+
+            <div class="right-column">
+              <p>Modules conventionally abstract over their datatype
+              with a <code>T</code> alias.</p>
+
+              <p>Operations are expressed in terms of
+              <code>T</code>.</p>
             </div>
 
             <br clear="all" />
-
-            <div class="left-column" style="font-size: 75%;">
-              <pre>
-                <code data-trim>
-object Modular {
-  trait Clickable[A] {
-    type T = A
-    def click(coords: Coords)(t: T)
-  }
-
-  trait Draggable[A] {
-    type T = A
-    def drag(startCoords: Coords, endCoords: Coords)(t: T)
-  }
-                </code>
-              </pre>
-            </div>
-
-            <div class="right-column" style="font-size: 75%;">
-              <p>Module types (signatures) very similar to
-              typeclasses.</p>
-
-              <p>Modules conventionally abstract over their datatype
-              using a <code>T</code> internal type.</p>
-
-              <p>Internally, operations in terms of <code>T</code>.</p>
-            </div>
           </section>
 
           <section>
-            <h2>Typeclasses and Modules</h2>
+            <h2>Modular Approach</h2>
 
-            <div class="left-column" style="font-size: 75%;">
-              <pre>
-                <code data-trim>
-object GuiIcon {
-  implicit val clickable: Clickable[GuiIcon] =
-    new Clickable[GuiIcon] {
-      override def click(coords: Coords)(guiIcon: GuiIcon) =
-        println(
-          s"${guiIcon.text} Clicked at (${coords._1}, ${coords._2})")
-    }
+            <h3>(Default) Implementation</h3>
 
-  implicit val draggable: Draggable[GuiIcon] =
-    new Draggable[GuiIcon] {
-      override def click(coords: Coords)(guiIcon: GuiIcon) =
-        guiIcon |> clickable.click(coords)
-
-      override def drag(
-        startCoords: Coords, endCoords: Coords)(guiIcon: GuiIcon) = {
-        guiIcon |> super.drag(startCoords, endCoords)
-
-        println(
-          s"${guiIcon.text} Dragged to (${endCoords._1}, ${endCoords._2})")
-      }
-    }
-}
-                </code>
-              </pre>
-            </div>
-
-            <br clear="all" />
-
-            <div class="left-column" style="font-size: 75%;">
+            <div class="left-column p80">
               <pre>
                 <code data-trim>
 object Clickable {
@@ -390,15 +381,111 @@ object Clickable {
         println(s"Clicked at (${coords._1}, ${coords._2})")
     }
 }
+
+object Draggable {
+  def apply[A](CA: Clickable[A]): Draggable[A] =
+    new Draggable[A] {
+      override def drag(
+        startCoords: Coords, endCoords: Coords)(t: T) =
+        t |> CA.click(startCoords)
+    }
+}
                 </code>
               </pre>
             </div>
 
-            <div class="right-column" style="font-size: 75%;">
-              <p>Default behaviours can be easily stashed inside trait
-              companion objects.</p>
+            <div class="right-column">
+              <p>Provide default implementations of modules for
+              <em>any</em> given type, <em>if:</em></p>
+
+              <p>We pass in the type parameter (<code>Clickable</code>),
+              or</p>
+
+              <p>We pass in a required input module
+              (<code>Draggable</code>).</p>
             </div>
+
+            <br clear="all" />
           </section>
+
+          <section>
+            <h2>Modular Approach</h2>
+
+            <h3>Customisation</h3>
+
+            <div class="left-column p75">
+              <pre>
+                <code data-trim>
+object GuiIcon {
+  val clickable = Clickable[GuiIcon]
+
+  val draggable: Draggable[GuiIcon] =
+    new Draggable[GuiIcon] {
+      val defaultDraggable = Draggable(clickable)
+
+      override def drag(
+        startCoords: Coords, endCoords: Coords)(t: T) = {
+        t |> defaultDraggable.drag(startCoords, endCoords)
+
+        println(
+          s"${t.text} Dragged to (${endCoords._1}, ${endCoords._2})")
+      }
+    }
+}
+                </code>
+              </pre>
+            </div>
+
+            <div class="right-column">
+              <p>We can use the default module implementation
+              (<code>Clickable</code>), or</p>
+
+              <p>We can use the default to create a custom module
+              (<code>Draggable</code>).</p>
+            </div>
+
+            <br clear="all" />
+          </section>
+
+          <section>
+            <h2>Modular Approach</h2>
+
+            <h3>Customisation</h3>
+
+            <div class="left-column p75">
+              <pre>
+                <code data-trim>
+object GuiIcon {
+  val clickable = Clickable[GuiIcon]
+
+  val draggable: Draggable[GuiIcon] =
+    new Draggable[GuiIcon] {
+      val defaultDraggable = Draggable(clickable)
+
+      override def drag(
+        startCoords: Coords, endCoords: Coords)(t: T) = {
+        t |> defaultDraggable.drag(startCoords, endCoords)
+
+        println(
+          s"${t.text} Dragged to (${endCoords._1}, ${endCoords._2})")
+      }
+    }
+}
+                </code>
+              </pre>
+            </div>
+
+            <div class="right-column">
+              <p>We can use the default module implementation
+              (<code>Clickable</code>), or</p>
+
+              <p>We can use the default to create a custom module
+              (<code>Draggable</code>).</p>
+            </div>
+
+            <br clear="all" />
+          </section>
+
         </section>
       </div>
     </div>
