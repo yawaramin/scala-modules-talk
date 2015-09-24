@@ -1,18 +1,25 @@
 <!doctype html>
 <html lang="en">
-
 	<head>
-		<meta charset="utf-8">
+		<meta charset="utf-8" />
 
-		<title>reveal.js - The HTML Presentation Framework</title>
+		<meta
+      name="description"
+      content="A comparison of different approaches to modelling
+      abstraction in Scala, with an emphasis on ML-style modular
+      abstraction." />
 
-		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
-		<meta name="author" content="Hakim El Hattab">
-
+		<meta name="author" content="Yawar Amin">
 		<meta name="apple-mobile-web-app-capable" content="yes" />
-		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+		<meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent" />
+
+		<meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0,
+      user-scalable=no, minimal-ui" />
 
 		<link rel="stylesheet" href="css/reveal.css">
 		<link rel="stylesheet" href="css/theme/solarized.css" id="theme">
@@ -22,30 +29,35 @@
 
 		<!-- Printing and PDF exports -->
 		<script>
-			var link = document.createElement( 'link' );
+			var link = document.createElement('link');
+
 			link.rel = 'stylesheet';
 			link.type = 'text/css';
-			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
-			document.getElementsByTagName( 'head' )[0].appendChild( link );
+
+			link.href =
+        window.location.search.match(/print-pdf/gi) ?
+          'css/print/pdf.css' :
+          'css/print/paper.css';
+
+			document.getElementsByTagName('head')[0].appendChild(link);
 		</script>
 
 		<!--[if lt IE 9]>
 		<script src="lib/js/html5shiv.js"></script>
 		<![endif]-->
+
+    <title>Scala Modules: a Comparison of Abstractions</title>
 	</head>
 
 	<body>
-
 		<div class="reveal">
-
-			<!-- Any section element inside of this container is displayed as a slide -->
 			<div class="slides">
 				<section>
-					<h1>Reveal.js</h1>
-					<h3>The HTML Presentation Framework</h3>
-					<p>
-						<small>Created by <a href="http://hakim.se">Hakim El Hattab</a> / <a href="http://twitter.com/hakimel">@hakimel</a></small>
-					</p>
+          <h1>Scala Modules</h1>
+          <h3>A Comparison of Abstractions</h3>
+
+					<p>Yawar Amin (yawar.amin@mediative.com, @yawaramin)</p>
+          <p>2015-09-25</p>
 				</section>
 
 				<section>
