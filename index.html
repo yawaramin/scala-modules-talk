@@ -94,7 +94,9 @@
           </ul>
 
           <p>We want to drag something, then click on it.</p>
+        </section>
 
+        <section>
           <h2>Invariants</h2>
 
           <p>If something is draggable, it should also (automatically)
@@ -394,15 +396,13 @@ object Draggable {
               </pre>
             </div>
 
-            <div class="right-column">
-              <p>Provide default implementations of modules for
-              <em>any</em> given type, <em>if:</em></p>
+            <div class="right-column p80">
+              <p>We can provide a trivial default implementation of
+              <code>Clickable</code>.</p>
 
-              <p>We pass in the type parameter (<code>Clickable</code>),
-              or</p>
-
-              <p>We pass in a required input module
-              (<code>Draggable</code>).</p>
+              <p>We can show the relationship between
+              <code>Clickable</code> and <code>Draggable</code> with a
+              functor (function) from the former to the latter.</p>
             </div>
 
             <br clear="all" />
@@ -421,6 +421,7 @@ object GuiIcon {
 
   val draggable: Draggable[GuiIcon] =
     new Draggable[GuiIcon] {
+      // You give me a Clickable[A], I give you a Draggable[A].
       val defaultDraggable = Draggable(clickable)
 
       override def drag(
@@ -437,10 +438,10 @@ object GuiIcon {
             </div>
 
             <div class="right-column">
-              <p>We can use the default module implementation
-              (<code>Clickable</code>), or</p>
+              <p>We can use a default module implementation
+              (<code>Clickable</code>), and</p>
 
-              <p>We can use the default to create a custom module
+              <p>We can compose over the default to customise
               (<code>Draggable</code>).</p>
             </div>
 
@@ -450,42 +451,72 @@ object GuiIcon {
           <section>
             <h2>Modular Approach</h2>
 
-            <h3>Customisation</h3>
+            <h3>Usage</h3>
 
-            <div class="left-column p75">
+            <div class="left-column">
               <pre>
                 <code data-trim>
-object GuiIcon {
-  val clickable = Clickable[GuiIcon]
+def dragThenClick(guiIcon: GuiIcon) = {
+  import GuiIcon._
 
-  val draggable: Draggable[GuiIcon] =
-    new Draggable[GuiIcon] {
-      val defaultDraggable = Draggable(clickable)
+  guiIcon |> draggable.drag(0 -> 0, 1 -> 1)
+  guiIcon |> clickable.click(1 -> 1)
+}
 
-      override def drag(
-        startCoords: Coords, endCoords: Coords)(t: T) = {
-        t |> defaultDraggable.drag(startCoords, endCoords)
-
-        println(
-          s"${t.text} Dragged to (${endCoords._1}, ${endCoords._2})")
-      }
-    }
+def run = {
+  val guiIcon = GuiIcon("Recycle Bin")
+  dragThenClick(guiIcon)
 }
                 </code>
               </pre>
             </div>
 
             <div class="right-column">
-              <p>We can use the default module implementation
-              (<code>Clickable</code>), or</p>
+              <p>Much the same as with the typeclass approach.</p>
 
-              <p>We can use the default to create a custom module
-              (<code>Draggable</code>).</p>
+              <p>Except we're manually grabbing modules from where we
+              put them.</p>
+
+              <aside class="notes">
+                We can't use implicit modules because it would lead to
+                implicit resolution ambiguity: we've put instances in
+                both the <code>Draggable</code> and <code>GuiIcon</code>
+                companion objects.
+              </aside>
             </div>
 
             <br clear="all" />
           </section>
+        </section>
 
+        <section>
+          <section>
+            <h2>In Review</h2>
+
+            <h3>Level of Abstraction (Subjectively)</h3>
+
+            <p>Inheritance seemingly at the simplest level of
+            abstraction. Adding new behaviours (i.e. traits) just puts
+            them all into the datatype's 'mixed bag' of behaviours and
+            state.</p>
+
+            <p>Typeclasses and modules at fairly similar abstraction
+            level. New behaviours go into their own instances.</p>
+          </section>
+
+          <section>
+            <h2>In Review</h2>
+
+            <h3>Syntax Support</h3>
+
+            <p>Inheritance clear winner. Scala designed as upgrade path
+            from Java--inheritance syntax needs to be top-notch.</p>
+
+            <p>Typeclasses and modules can both benefit from companion
+            objects and implicits.</p>
+
+            <p>They can both benefit from macros/codegen.</p>
+          </section>
         </section>
       </div>
     </div>
